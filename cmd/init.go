@@ -12,7 +12,7 @@ import (
 var initForce bool
 
 var initCmd = &cobra.Command{
-	Use:   "init",
+	Use:   "init <credentials.json>",
 	Short: "Authenticate with Google",
 	Long: `Initialize docmd by authenticating with your Google account.
 
@@ -20,6 +20,7 @@ This will open a browser window for you to authorize docmd to
 access your Google Drive (only files created by docmd).
 
 Your credentials will be stored in ~/.docmd/`,
+	Args: cobra.ExactArgs(1),
 	RunE: runInit,
 }
 
@@ -29,17 +30,12 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
-	if !auth.IsConfigured() {
-		printError("OAuth credentials not configured!")
-		fmt.Println()
-		fmt.Println("To use docmd, you need to set up Google OAuth credentials:")
-		fmt.Println("1. Go to https://console.cloud.google.com/")
-		fmt.Println("2. Create a new project (or select existing)")
-		fmt.Println("3. Enable the Google Drive API")
-		fmt.Println("4. Create OAuth 2.0 credentials (Desktop app type)")
-		fmt.Println("5. Set CLIENT_ID and CLIENT_SECRET in .env")
-		fmt.Println()
-		return fmt.Errorf("oauth not configured")
+	credsPath := args[0]
+
+	creds, err := auth.LoadCredentials(credsPath)
+	if err != nil {
+		printError("Invalid credentials file")
+		return err
 	}
 
 	if auth.TokenExists() && !initForce {
@@ -55,13 +51,18 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Println("Starting authentication...")
 	fmt.Println()
 
-	token, err := auth.Authenticate()
+	token, err := auth.Authenticate(creds)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	if err := auth.SaveToken(token); err != nil {
-		return fmt.Errorf("failed to save token: %w", err)
+	storedAuth := &auth.StoredAuth{
+		Token:       token,
+		Credentials: creds,
+	}
+
+	if err := auth.SaveAuth(storedAuth); err != nil {
+		return fmt.Errorf("failed to save credentials: %w", err)
 	}
 
 	fmt.Println()

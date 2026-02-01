@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"os"
 
-	"golang.org/x/oauth2"
-
 	"github.com/ohhmaar/docmd/internal/config"
+	"golang.org/x/oauth2"
 )
 
-func SaveToken(token *oauth2.Token) error {
+type StoredAuth struct {
+	Token       *oauth2.Token      `json:"token"`
+	Credentials *GoogleCredentials `json:"credentials"`
+}
+
+func SaveAuth(auth *StoredAuth) error {
 	if err := config.EnsureConfigDir(); err != nil {
 		return err
 	}
@@ -19,7 +23,7 @@ func SaveToken(token *oauth2.Token) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(token, "", "  ")
+	data, err := json.MarshalIndent(auth, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -27,7 +31,7 @@ func SaveToken(token *oauth2.Token) error {
 	return os.WriteFile(tokenPath, data, 0600)
 }
 
-func LoadToken() (*oauth2.Token, error) {
+func LoadAuth() (*StoredAuth, error) {
 	tokenPath, err := config.GetTokenPath()
 	if err != nil {
 		return nil, err
@@ -38,12 +42,28 @@ func LoadToken() (*oauth2.Token, error) {
 		return nil, err
 	}
 
-	var token oauth2.Token
-	if err := json.Unmarshal(data, &token); err != nil {
+	var auth StoredAuth
+	if err := json.Unmarshal(data, &auth); err != nil {
 		return nil, err
 	}
 
-	return &token, nil
+	return &auth, nil
+}
+
+func LoadToken() (*oauth2.Token, error) {
+	auth, err := LoadAuth()
+	if err != nil {
+		return nil, err
+	}
+	return auth.Token, nil
+}
+
+func LoadCredentialsFromStore() (*GoogleCredentials, error) {
+	auth, err := LoadAuth()
+	if err != nil {
+		return nil, err
+	}
+	return auth.Credentials, nil
 }
 
 func TokenExists() bool {
@@ -61,4 +81,24 @@ func DeleteToken() error {
 		return err
 	}
 	return os.Remove(tokenPath)
+}
+
+// Backward compatibility - for reading old token format
+func LoadTokenLegacy() (*oauth2.Token, error) {
+	tokenPath, err := config.GetTokenPath()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(tokenPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var token oauth2.Token
+	if err := json.Unmarshal(data, &token); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
 }

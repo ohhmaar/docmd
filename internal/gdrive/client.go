@@ -13,22 +13,23 @@ import (
 )
 
 func GetClient() (*http.Client, error) {
-	token, err := auth.LoadToken()
+	storedAuth, err := auth.LoadAuth()
 	if err != nil {
 		return nil, fmt.Errorf("not authenticated - run 'docmd init' first: %w", err)
 	}
 
-	config := auth.GetOAuthConfig("")
+	config := auth.GetOAuthConfig(storedAuth.Credentials, "")
 
-	tokenSource := config.TokenSource(context.Background(), token)
+	tokenSource := config.TokenSource(context.Background(), storedAuth.Token)
 
 	newToken, err := tokenSource.Token()
 	if err != nil {
 		return nil, fmt.Errorf("failed to refresh token: %w", err)
 	}
 
-	if newToken.AccessToken != token.AccessToken {
-		if err := auth.SaveToken(newToken); err != nil {
+	if newToken.AccessToken != storedAuth.Token.AccessToken {
+		storedAuth.Token = newToken
+		if err := auth.SaveAuth(storedAuth); err != nil {
 			fmt.Printf("Warning: failed to save refreshed token: %v\n", err)
 		}
 	}

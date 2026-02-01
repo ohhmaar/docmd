@@ -45,19 +45,12 @@ go install
 6. Select "Desktop app" as the application type
 7. Download the credentials
 
-### 2. Configure docmd
+### 2. Authenticate
 
-Create a `.env` file in the project root with your credentials:
-
-```env
-CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
-CLIENT_SECRET=YOUR_CLIENT_SECRET
-```
-
-### 3. Authenticate
+Use the downloaded credentials file to authenticate:
 
 ```bash
-docmd init
+docmd init ~/Downloads/client_secret_*.json
 ```
 
 This will open your browser for Google authentication. Your credentials are stored in `~/.docmd/`.
@@ -144,9 +137,9 @@ Configuration is stored in `~/.docmd/`:
 
 Run `docmd init` to authenticate with Google.
 
-### "OAuth credentials not configured" error
+### "Invalid credentials file" error
 
-Make sure you've added your Google OAuth client ID and secret to `.env`.
+Make sure you're providing the correct path to the credentials JSON file downloaded from Google Cloud Console.
 
 ### "Google Doc not found" error
 

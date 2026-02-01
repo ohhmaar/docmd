@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -17,26 +16,19 @@ import (
 	"google.golang.org/api/drive/v3"
 )
 
-const (
-	envClientID     = "CLIENT_ID"
-	envClientSecret = "CLIENT_SECRET"
-)
-
-func GetOAuthConfig(redirectURL string) *oauth2.Config {
-	clientID := os.Getenv(envClientID)
-	clientSecret := os.Getenv(envClientSecret)
+func GetOAuthConfig(creds *GoogleCredentials, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
+		ClientID:     creds.Installed.ClientID,
+		ClientSecret: creds.Installed.ClientSecret,
 		Endpoint:     google.Endpoint,
 		RedirectURL:  redirectURL,
 		Scopes: []string{
-			drive.DriveFileScope, // Only access files created by this app
+			drive.DriveFileScope,
 		},
 	}
 }
 
-func Authenticate() (*oauth2.Token, error) {
+func Authenticate(creds *GoogleCredentials) (*oauth2.Token, error) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return nil, fmt.Errorf("failed to start local server: %w", err)
@@ -44,7 +36,7 @@ func Authenticate() (*oauth2.Token, error) {
 	port := listener.Addr().(*net.TCPAddr).Port
 	redirectURL := fmt.Sprintf("http://localhost:%d/callback", port)
 
-	config := GetOAuthConfig(redirectURL)
+	config := GetOAuthConfig(creds, redirectURL)
 
 	state, err := generateState()
 	if err != nil {
@@ -160,7 +152,5 @@ func openBrowser(url string) error {
 }
 
 func IsConfigured() bool {
-	clientID := os.Getenv(envClientID)
-	clientSecret := os.Getenv(envClientSecret)
-	return clientID != "" && clientSecret != ""
+	return false
 }
