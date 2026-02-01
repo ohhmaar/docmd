@@ -23,9 +23,9 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.date={{.Date}}
+      - -X github.com/ohhmaar/docmd/cmd.version={{.Version}}
+      - -X github.com/ohhmaar/docmd/cmd.commit={{.Commit}}
+      - -X github.com/ohhmaar/docmd/cmd.date={{.Date}}
 
 archives:
   - id: docmd
