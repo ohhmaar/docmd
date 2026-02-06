@@ -20,6 +20,12 @@ Write in your favorite editor, sync to Google Docs for sharing and collaboration
 
 ## Installation
 
+### Homebrew
+
+```bash
+brew install ohhmaar/tap/docmd
+```
+
 ```bash
 # Clone the repository
 git clone https://github.com/ohhmaar/docmd.git
